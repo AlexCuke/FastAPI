@@ -1,4 +1,4 @@
-# service/wallets.py - исправленный
+# app/service/wallets.py
 from app.models import User
 from app.schemas import CreateWalletRequest
 from app.repository import wallets as wallets_repository
@@ -8,30 +8,40 @@ from sqlalchemy.orm import Session
 
 def get_wallet(db: Session, current_user: User, wallet_name: str | None = None):  
     if wallet_name is None:
-        wallets = wallets_repository.get_all_wallets(db, current_user.id)  # Добавлен current_user.id
+        wallets = wallets_repository.get_all_wallets(db, current_user.id)
         total_balance = sum(w.balance for w in wallets)
         return {'total_balance': float(total_balance)}
-    if not wallets_repository.is_wallet_exist(db, current_user.id, wallet_name):  # Добавлен current_user.id
+    if not wallets_repository.is_wallet_exist(db, current_user.id, wallet_name):
         raise HTTPException(
             status_code=404,
             detail=f"Wallet '{wallet_name}' not found"
         )
-    wallet = wallets_repository.get_value_balance_by_name(db, current_user.id, wallet_name)  # Добавлен current_user.id
+    wallet = wallets_repository.get_value_balance_by_name(db, current_user.id, wallet_name)
+    if wallet is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Wallet '{wallet_name}' not found"
+        )
     return {'wallet': wallet.name, 'balance': float(wallet.balance)}
 
 def create_wallet(db: Session, current_user: User, wallet: CreateWalletRequest):
-    if wallets_repository.is_wallet_exist(db, current_user.id, wallet.wallet_name):  # Добавлен current_user.id
+    # Проверяем, существует ли кошелек
+    if wallets_repository.is_wallet_exist(db, current_user.id, wallet.wallet_name):
         raise HTTPException(
             status_code=400,
             detail=f"Wallet {wallet.wallet_name} already exists"
         )
+    
+    # Создаем кошелек с привязкой к текущему пользователю
     new_wallet = wallets_repository.create_wallet(
         db, 
         wallet.wallet_name, 
         Decimal(str(wallet.initial_balance)),
-        current_user.id  # Добавлен user_id
+        current_user.id  # Передаем user_id
     )
     db.commit()
+    db.refresh(new_wallet)
+    
     return {
         "message": f"Wallet {new_wallet.name} created successfully",
         "wallet": new_wallet.name,
