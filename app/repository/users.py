@@ -7,3 +7,7 @@ def create_user(db:Session,login:str)-> User:
     db.add(user)
     db.flush()
     return user
+
+
+def get_user_by_login(db:Session,login:str)-> User:
+    return db.query(User).filter(User.login==login).first()

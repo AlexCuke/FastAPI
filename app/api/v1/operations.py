@@ -1,15 +1,17 @@
+# operations.py в api/v1 - добавьте импорт get_current_user
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from app.models import User
 from app.schemas import OperationRequest
 from app.service import operations as operation_service
-from app.generator import get_db
+from app.dependency import get_db, get_current_user  # Добавлен get_current_user
 
 router = APIRouter()
 
 @router.post("/operation/income")
-def add_income(operation: OperationRequest,db : Session = Depends(get_db)):   
-    return operation_service.add_income(operation)
+def add_income(operation: OperationRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):   
+    return operation_service.add_income(db, current_user, operation)
 
 @router.post("/operation/expense")
-def add_expense(operation: OperationRequest,db : Session = Depends(get_db)):
-    return operation_service.add_expense(operation)
+def add_expense(operation: OperationRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return operation_service.add_expense(db, current_user, operation)
