@@ -2,10 +2,9 @@ from fastapi import HTTPException
 from app.schemas import OperationRequest
 from app.repository import wallets as wallets_repository
 from app.database import SessionLocal
+from sqlalchemy.orm import Session
 
-def add_income(operation: OperationRequest):
-    db = SessionLocal()
-    try:
+def add_income(db:Session, operation: OperationRequest):
         if not wallets_repository.is_wallet_exist(db, operation.wallet_name):
             raise HTTPException(
                 status_code=404,
@@ -21,12 +20,9 @@ def add_income(operation: OperationRequest):
             "description": operation.description,
             "new_balance": float(wallet.balance)  # <-- ИСПРАВЛЕНО: float()
         }
-    finally:
-        db.close()
 
-def add_expense(operation: OperationRequest):
-    db = SessionLocal()
-    try:
+
+def add_expense(db:Session,operation: OperationRequest):
         if not wallets_repository.is_wallet_exist(db, operation.wallet_name):
             raise HTTPException(
                 status_code=404,
@@ -50,5 +46,3 @@ def add_expense(operation: OperationRequest):
             "description": operation.description,
             "new_balance": float(wallet.balance)  # <-- ИСПРАВЛЕНО: float()
         }
-    finally:
-        db.close()
