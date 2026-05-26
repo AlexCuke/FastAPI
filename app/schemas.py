@@ -103,3 +103,12 @@ def add_expense(operation: OperationRequest):
         "description": operation.description,
         "new_balance": BALANCE[operation.wallet_name]
     }
+    
+    
+class UserRequest(BaseModel):
+    login:str=Field(...,max_length=127)
+
+
+class UserResponse(UserRequest):
+    model_config={"from_attributes":True}
+    id: int
